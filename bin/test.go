@@ -1,31 +1,26 @@
 package main
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
-	"strings"
+	"fmt"
+	"github.com/zserge/lorca"
 )
 
 func main() {
-	var inTE, outTE *walk.TextEdit
+	ui, _ := lorca.New("https://hsbcapi.51jiaoyujia.com/admin", "", 1280, 1024)
+	defer ui.Close()
 
-	_, _ = MainWindow{
-		Title:   "SCREAMO",
-		MinSize: Size{600, 400},
-		Layout:  VBox{},
-		Children: []Widget{
-			HSplitter{
-				Children: []Widget{
-					TextEdit{AssignTo: &inTE},
-					TextEdit{AssignTo: &outTE, ReadOnly: true},
-				},
-			},
-			PushButton{
-				Text: "SCREAM",
-				OnClicked: func() {
-					_ = outTE.SetText(strings.ToUpper(inTE.Text()))
-				},
-			},
-		},
-	}.Run()
+	// Bind Go function to be available in JS. Go function may be long-running and
+	// blocking - in JS it's represented with a Promise.
+	_ = ui.Bind("add", func(a, b int) int { return a + b })
+
+	// Call JS function from Go. Functions may be asynchronous, i.e. return promises
+	n := ui.Eval(`Math.random()`).Float()
+	fmt.Println(n)
+
+	// Call JS that calls Go and so on and so on...
+	m := ui.Eval(`add(2, 3)`).Int()
+	fmt.Println(m)
+
+	// Wait for the browser window to be closed
+	<-ui.Done()
 }
